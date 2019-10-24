@@ -1,3 +1,50 @@
 = Ktor Error Responses
 
 Ktor Error Responses feature for APIs
+
+== Example
+.Installation
+[source,kotlin]
+----
+install(CallId) {
+    header(HttpHeaders.XRequestId)
+    generate { UUID.randomUUID().toString() }
+    verify { it.isNotBlank() }
+}
+
+install(ErrorResponses) {
+    handler<DefaultExceptionHandler> {
+        register<IncorrectSchemaException>(BadRequest)
+        register<NotSupportedException>(BadRequest)
+        register<ItemNotFound>(NotFound)
+    }
+}
+----
+
+.Generic 404
+[source,json]
+----
+{
+  "status": 404,
+  "type": "Generic 404",
+  "title": "Not Found",
+  "detail": "404 Not Found",
+  "instance": "ae6c1d55-38bf-4223-8562-a0e87e8b9908",
+  "path": "/api/unknown/path",
+  "timestamp": "2019-10-24T14:47:34.862+02:00"
+}
+----
+
+.Mapped error
+[source,json]
+----
+{
+  "status": 404,
+  "type": "your.app.exceptions.ItemNotFound",
+  "title": "Not Found",
+  "detail": "Could not find entity: 123",
+  "instance": "f7d4d3d7-910b-495a-b3b0-bce8ef869408",
+  "path": "/api/my-entities/123",
+  "timestamp": "2019-10-24T14:45:32.532+02:00"
+}
+----
