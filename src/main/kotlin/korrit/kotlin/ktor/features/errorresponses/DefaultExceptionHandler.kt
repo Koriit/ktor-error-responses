@@ -71,7 +71,7 @@ open class DefaultExceptionHandler(val config: ErrorResponses.Configuration) {
     /**
      * Handler of errors for which status code was registered beforehand.
      */
-    suspend fun handleKnown(cause: Throwable, status: HttpStatusCode, ctx: PipelineContext<*, ApplicationCall>) = with(ctx) {
+    open suspend fun handleKnown(cause: Throwable, status: HttpStatusCode, ctx: PipelineContext<*, ApplicationCall>) = with(ctx) {
         if (status.value >= InternalServerError.value) {
             LOG.error(cause.message, cause)
         } else {
@@ -93,7 +93,7 @@ open class DefaultExceptionHandler(val config: ErrorResponses.Configuration) {
     /**
      * Handler of errors which were not registered beforehand.
      */
-    suspend fun handleUnknown(cause: Throwable, ctx: PipelineContext<Unit, ApplicationCall>) = with(ctx) {
+    open suspend fun handleUnknown(cause: Throwable, ctx: PipelineContext<Unit, ApplicationCall>) = with(ctx) {
         LOG.error("Unexpected error: ${cause.message}", cause)
 
         val status = InternalServerError
@@ -112,7 +112,7 @@ open class DefaultExceptionHandler(val config: ErrorResponses.Configuration) {
     /**
      * Intercept error responses as some might not have been triggered by an exception
      */
-    suspend fun interceptErrorResponse(status: HttpStatusCode, ctx: PipelineContext<*, ApplicationCall>) = with(ctx) {
+    open suspend fun interceptErrorResponse(status: HttpStatusCode, ctx: PipelineContext<*, ApplicationCall>) = with(ctx) {
         if (subject is NoContent) {
             val error = ApiError(
                     status = status.value,
