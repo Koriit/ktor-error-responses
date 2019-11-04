@@ -4,6 +4,8 @@ import io.ktor.application.ApplicationCall
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.ApplicationFeature
 import io.ktor.application.call
+import io.ktor.application.featureOrNull
+import io.ktor.features.CallId
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.request.ApplicationReceivePipeline
@@ -219,6 +221,8 @@ class ErrorResponses(config: Configuration) {
         override val key = AttributeKey<ErrorResponses>("Error Responses")
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): ErrorResponses {
+            pipeline.featureOrNull(CallId) ?: throw IllegalStateException("ErrorResponses requires CallId feature to be installed")
+
             val configuration = Configuration().apply(configure)
             val feature = ErrorResponses(configuration)
             if (feature.statuses.isNotEmpty()) {
