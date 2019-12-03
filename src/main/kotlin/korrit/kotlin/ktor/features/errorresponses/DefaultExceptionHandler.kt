@@ -18,9 +18,9 @@ import io.ktor.request.path
 import io.ktor.response.respond
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.pipeline.PipelineContext
+import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.TimeoutCancellationException
 import org.slf4j.LoggerFactory
-import java.util.concurrent.TimeoutException
 
 /**
  * Base exception handler for HTTP API server.
@@ -28,19 +28,25 @@ import java.util.concurrent.TimeoutException
 @KtorExperimentalAPI
 open class DefaultExceptionHandler(val config: ErrorResponses.Configuration) {
 
-    private val LOG = LoggerFactory.getLogger(DefaultExceptionHandler::class.java)
+    private val log = LoggerFactory.getLogger(DefaultExceptionHandler::class.java)
 
     /**
-     * Registers exception type to HTTP status mapping
+     * Registers call pipeline exception type to HTTP status mapping.
      */
     inline fun <reified T : Throwable> register(status: HttpStatusCode) {
         config.exception<T> { handleKnown(it, status, this) }
     }
 
+    /**
+     * Registers send pipeline exception type to HTTP status mapping.
+     */
     inline fun <reified T : Throwable> registerSend(status: HttpStatusCode) {
         config.sendException<T> { handleKnown(it, status, this) }
     }
 
+    /**
+     * Registers receive pipeline exception type to HTTP status mapping.
+     */
     inline fun <reified T : Throwable> registerReceive(status: HttpStatusCode) {
         config.receiveException<T> { handleKnown(it, status, this) }
     }
@@ -52,9 +58,13 @@ open class DefaultExceptionHandler(val config: ErrorResponses.Configuration) {
             // Generic status exception
             exception<ResponseStatusException> { handleKnown(it, it.status, this) }
 
-            status(*allStatusCodes.filter { it.value >= BadRequest.value }.toTypedArray()) { status ->
-                interceptErrorResponse(status, this)
-            }
+            allStatusCodes
+                .filter { it.value >= BadRequest.value }
+                .forEach {
+                    status(it) { status ->
+                        interceptErrorResponse(status, this)
+                    }
+                }
 
             // Internal ktor exceptions
             register<BadRequestException>(BadRequest)
@@ -73,18 +83,18 @@ open class DefaultExceptionHandler(val config: ErrorResponses.Configuration) {
      */
     open suspend fun handleKnown(cause: Throwable, status: HttpStatusCode, ctx: PipelineContext<*, ApplicationCall>) = with(ctx) {
         if (status.value >= InternalServerError.value) {
-            LOG.error(cause.message, cause)
+            log.error(cause.message, cause)
         } else {
-            LOG.debug(cause.message, cause)
+            log.debug(cause.message, cause)
         }
 
         val error = ApiError(
-                status = status.value,
-                type = cause.javaClass.name,
-                title = status.description,
-                path = call.request.path(),
-                instance = call.callId!!,
-                detail = cause.localizedMessage
+            status = status.value,
+            type = cause.javaClass.name,
+            title = status.description,
+            path = call.request.path(),
+            instance = call.callId!!,
+            detail = cause.localizedMessage
         )
 
         call.respond(status, error)
@@ -94,33 +104,33 @@ open class DefaultExceptionHandler(val config: ErrorResponses.Configuration) {
      * Handler of errors which were not registered beforehand.
      */
     open suspend fun handleUnknown(cause: Throwable, ctx: PipelineContext<Unit, ApplicationCall>) = with(ctx) {
-        LOG.error("Unexpected error: ${cause.message}", cause)
+        log.error("Unexpected error: ${cause.message}", cause)
 
         val status = InternalServerError
         val response = ApiError(
-                status = status.value,
-                type = "UnexpectedError",
-                title = status.description,
-                path = call.request.path(),
-                instance = call.callId!!,
-                detail = "Internal server error, please, contact administrator"
+            status = status.value,
+            type = "UnexpectedError",
+            title = status.description,
+            path = call.request.path(),
+            instance = call.callId!!,
+            detail = "Internal server error, please, contact administrator"
         )
 
         call.respond(status, response)
     }
 
     /**
-     * Intercept error responses as some might not have been triggered by an exception
+     * Intercept error responses as some might not have been triggered by an exception.
      */
     open suspend fun interceptErrorResponse(status: HttpStatusCode, ctx: PipelineContext<*, ApplicationCall>) = with(ctx) {
         if (subject is NoContent) {
             val error = ApiError(
-                    status = status.value,
-                    type = "Generic ${status.value}",
-                    title = status.description,
-                    path = call.request.path(),
-                    instance = call.callId!!,
-                    detail = status.toString()
+                status = status.value,
+                type = "Generic ${status.value}",
+                title = status.description,
+                path = call.request.path(),
+                instance = call.callId!!,
+                detail = status.toString()
             )
 
             call.respond(status, error)

@@ -13,9 +13,8 @@ import io.ktor.request.ApplicationReceiveRequest
 import io.ktor.response.ApplicationSendPipeline
 import io.ktor.util.AttributeKey
 import io.ktor.util.pipeline.PipelineContext
-import kotlinx.coroutines.coroutineScope
-import java.util.*
 import kotlin.reflect.full.primaryConstructor
+import kotlinx.coroutines.coroutineScope
 
 typealias CallCallback = suspend PipelineContext<Unit, ApplicationCall>.(Throwable) -> Unit
 typealias StatusCallback = suspend PipelineContext<Any, ApplicationCall>.(HttpStatusCode) -> Unit
@@ -29,6 +28,7 @@ class ErrorResponses(config: Configuration) {
 
     // Wrappers to pass exceptions from receive/send pipelines to application pipeline
     private class ReceivePipelineExceptionWrapper(wrapped: Throwable) : Exception(wrapped)
+
     private class SendPipelineExceptionWrapper(wrapped: Throwable) : Exception(wrapped)
 
     private val callExceptions = HashMap(config.callExceptions)
@@ -37,81 +37,89 @@ class ErrorResponses(config: Configuration) {
     private val statuses = HashMap(config.statuses)
 
     /**
-     * Error responses feature config
+     * Error responses feature config.
      */
     class Configuration {
 
         /**
-         * Exception handlers map by exception class
+         * Receive pipeline exception handlers map by exception class.
          */
         val receiveExceptions = mutableMapOf<Class<*>, CallCallback>()
+
+        /**
+         * Send pipeline exception handlers map by exception class.
+         */
         val sendExceptions = mutableMapOf<Class<*>, CallCallback>()
+
+        /**
+         * Call pipeline exception handlers map by exception class.
+         */
         val callExceptions = mutableMapOf<Class<*>, CallCallback>()
 
         /**
-         * Status handlers by status code
+         * Status handlers by status code.
          */
         val statuses = mutableMapOf<HttpStatusCode, StatusCallback>()
 
         /**
-         * Register exception [handler] for exception type [T] and it's children
+         * Register call pipeline exception [handler] for exception type [T] and it's children.
          */
         inline fun <reified T : Throwable> exception(
-                noinline handler: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit
+            noinline handler: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit
         ) =
-                exception(T::class.java, handler)
+            exception(T::class.java, handler)
 
         /**
-         * Register exception [handler] for exception class [klass] and it's children
+         * Register call pipeline exception [handler] for exception class [klass] and it's children.
          */
         fun <T : Throwable> exception(
-                klass: Class<T>,
-                handler: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit
+            klass: Class<T>,
+            handler: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit
         ) {
             @Suppress("UNCHECKED_CAST")
             callExceptions.put(klass, handler as CallCallback)
         }
 
         /**
-         * Register receiveException [handler] for exception type [T] and it's children
+         * Register receive pipeline exception [handler] for exception type [T] and it's children.
          */
         inline fun <reified T : Throwable> receiveException(
-                noinline handler: suspend PipelineContext<ApplicationReceiveRequest, ApplicationCall>.(T) -> Unit
+            noinline handler: suspend PipelineContext<ApplicationReceiveRequest, ApplicationCall>.(T) -> Unit
         ) =
-                receiveException(T::class.java, handler)
+            receiveException(T::class.java, handler)
 
         /**
-         * Register receiveException [handler] for exception class [klass] and it's children
+         * Register receive pipeline exception [handler] for exception class [klass] and it's children.
          */
         fun <T : Throwable> receiveException(
-                klass: Class<T>,
-                handler: suspend PipelineContext<ApplicationReceiveRequest, ApplicationCall>.(T) -> Unit
+            klass: Class<T>,
+            handler: suspend PipelineContext<ApplicationReceiveRequest, ApplicationCall>.(T) -> Unit
         ) {
             @Suppress("UNCHECKED_CAST")
             receiveExceptions.put(klass, handler as CallCallback)
         }
 
         /**
-         * Register sendException [handler] for exception type [T] and it's children
+         * Register send pipeline exception [handler] for exception type [T] and it's children.
          */
         inline fun <reified T : Throwable> sendException(
-                noinline handler: suspend PipelineContext<Any, ApplicationCall>.(T) -> Unit
+            noinline handler: suspend PipelineContext<Any, ApplicationCall>.(T) -> Unit
         ) =
-                sendException(T::class.java, handler)
+            sendException(T::class.java, handler)
 
         /**
-         * Register sendException [handler] for exception class [klass] and it's children
+         * Register send pipeline exception [handler] for exception class [klass] and it's children.
          */
         fun <T : Throwable> sendException(
-                klass: Class<T>,
-                handler: suspend PipelineContext<Any, ApplicationCall>.(T) -> Unit
+            klass: Class<T>,
+            handler: suspend PipelineContext<Any, ApplicationCall>.(T) -> Unit
         ) {
             @Suppress("UNCHECKED_CAST")
             sendExceptions.put(klass, handler as CallCallback)
         }
 
         /**
-         * Register status [handler] for [status] code
+         * Register status [handler] for [status] code.
          */
         fun status(vararg status: HttpStatusCode, handler: StatusCallback) {
             status.forEach {
@@ -120,10 +128,11 @@ class ErrorResponses(config: Configuration) {
         }
 
         /**
-         * Helper function to register Exception Handlers
+         * Helper function to register Exception Handlers.
          */
         inline fun <reified T : Any> handler(configure: T.() -> Unit = {}) {
-            T::class.primaryConstructor?.call(this)?.configure() ?: throw IllegalArgumentException("${T::class.java.name} handler does not define primary constructor with ${this.javaClass.name} argument")
+            T::class.primaryConstructor?.call(this)?.configure()
+                ?: throw IllegalArgumentException("${T::class.java.name} handler does not define primary constructor with ${this.javaClass.name} argument")
         }
     }
 
@@ -153,6 +162,7 @@ class ErrorResponses(config: Configuration) {
     }
 
     private suspend fun interceptCall(context: PipelineContext<Unit, ApplicationCall>) {
+        @Suppress("TooGenericExceptionCaught") // intended
         try {
             coroutineScope {
                 context.proceed()
@@ -175,6 +185,7 @@ class ErrorResponses(config: Configuration) {
     }
 
     private suspend fun wrapReceiveExceptions(context: PipelineContext<*, ApplicationCall>) {
+        @Suppress("TooGenericExceptionCaught") // intended
         try {
             coroutineScope {
                 context.proceed()
@@ -189,6 +200,7 @@ class ErrorResponses(config: Configuration) {
     }
 
     private suspend fun wrapSendExceptions(context: PipelineContext<*, ApplicationCall>) {
+        @Suppress("TooGenericExceptionCaught") // intended
         try {
             coroutineScope {
                 context.proceed()
@@ -214,7 +226,7 @@ class ErrorResponses(config: Configuration) {
     }
 
     /**
-     * Feature installation object
+     * Feature installation object.
      */
     companion object Feature : ApplicationFeature<ApplicationCallPipeline, Configuration, ErrorResponses> {
 

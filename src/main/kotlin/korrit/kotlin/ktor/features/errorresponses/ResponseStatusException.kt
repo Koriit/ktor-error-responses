@@ -8,7 +8,7 @@ import io.ktor.http.HttpStatusCode
  * This class is abstract as using such generic exception would be bad practice.
  */
 abstract class ResponseStatusException(
-        val status: HttpStatusCode,
-        message: String,
-        cause: Throwable? = null
+    val status: HttpStatusCode,
+    message: String,
+    cause: Throwable? = null
 ) : RuntimeException(message, cause)

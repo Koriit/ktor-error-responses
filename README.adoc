@@ -1,6 +1,13 @@
 = Ktor Error Responses
 
-Ktor Error Responses feature for APIs
+image:https://www.travis-ci.org/Koriit/ktor-error-responses.svg?branch=master["Build Status", link="https://www.travis-ci.org/Koriit/ktor-error-responses"]
+image:https://www.codefactor.io/repository/github/koriit/ktor-error-responses/badge[CodeFactor,link=https://www.codefactor.io/repository/github/koriit/ktor-error-responses]
+image:https://img.shields.io/badge/code%20style-%E2%9D%A4-FF4081.svg[ktlint,link=https://ktlint.github.io/]
+
+image:https://api.bintray.com/packages/koriit/kotlin/ktor-error-responses/images/download.svg[Download, link=https://bintray.com/koriit/kotlin/ktor-error-responses/_latestVersion]
+image:https://img.shields.io/github/license/koriit/ktor-error-responses[GitHub]
+
+Ktor Error Responses feature for HTTP APIs
 
 == Example
 .Installation
@@ -14,9 +21,12 @@ install(CallId) {
 
 install(ErrorResponses) {
     handler<DefaultExceptionHandler> {
+        // Domain
         register<IncorrectSchemaException>(BadRequest)
         register<NotSupportedException>(BadRequest)
-        register<ItemNotFound>(NotFound)
+        register<ItemNotFoundException>(NotFound)
+        // Jackson
+        registerReceive<JsonProcessingException>(BadRequest)
     }
 }
 ----
