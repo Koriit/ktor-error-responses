@@ -27,6 +27,8 @@ install(ErrorResponses) {
         register<ItemNotFoundException>(NotFound)
         // Jackson
         registerReceive<JsonProcessingException>(BadRequest)
+        //
+        // registerSend...
     }
 }
 ----
@@ -58,3 +60,19 @@ install(ErrorResponses) {
   "timestamp": "2019-10-24T14:45:32.532+02:00"
 }
 ----
+
+== Requirements
+TODO Doc
+
+== Mapping
+TODO Doc
+
+== Default Exception Handler
+TODO Doc
+
+== API Error
+TODO Doc
+
+== Experimental status
+Error responses for Ktor uses some experimental Ktor API and therefore unfortunately there is no
+guarantee that there will no compatibility breaks between Ktor versions.

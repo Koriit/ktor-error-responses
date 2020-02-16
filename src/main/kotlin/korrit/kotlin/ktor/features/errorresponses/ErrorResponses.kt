@@ -26,10 +26,11 @@ typealias StatusCallback = suspend PipelineContext<Any, ApplicationCall>.(HttpSt
  */
 class ErrorResponses(config: Configuration) {
 
-    // Wrappers to pass exceptions from receive/send pipelines to application pipeline
-    private class ReceivePipelineExceptionWrapper(wrapped: Throwable) : Exception(wrapped)
+    /** Wrapper to pass exceptions from receive pipeline to application pipeline. */
+    private class ReceivePipelineExceptionWrapper(val handler: CallCallback, wrapped: Throwable) : Exception(wrapped)
 
-    private class SendPipelineExceptionWrapper(wrapped: Throwable) : Exception(wrapped)
+    /** Wrapper to pass exceptions from send pipeline to application pipeline. */
+    private class SendPipelineExceptionWrapper(val handler: CallCallback, wrapped: Throwable) : Exception(wrapped)
 
     private val callExceptions = HashMap(config.callExceptions)
     private val receiveExceptions = HashMap(config.callExceptions + config.receiveExceptions)
@@ -170,17 +171,17 @@ class ErrorResponses(config: Configuration) {
         } catch (e: Throwable) {
             // If we handled those underlying exceptions inside receive/send pipelines then application pipeline
             // would just continue normally and without a doubt fail somewhere spectacularly
-            val (exception, handlers) = when (e) {
-                is ReceivePipelineExceptionWrapper -> e.cause!! to receiveExceptions
-                is SendPipelineExceptionWrapper -> e.cause!! to sendExceptions
-                else -> e to callExceptions
+            val (exception: Throwable, handler: CallCallback?) = when (e) {
+                is ReceivePipelineExceptionWrapper -> e.cause!! to e.handler
+                is SendPipelineExceptionWrapper -> e.cause!! to e.handler
+                else -> e to findHandlerByType(e.javaClass, callExceptions)
             }
-            val handler = findHandlerByType(exception.javaClass, handlers)
             if (handler != null && context.call.response.status() == null) {
-                context.handler(exception)
+                handler(context, exception)
                 finishIfResponseSent(context)
-            } else
+            } else {
                 throw exception
+            }
         }
     }
 
@@ -193,9 +194,10 @@ class ErrorResponses(config: Configuration) {
         } catch (exception: Throwable) {
             val handler = findHandlerByType(exception.javaClass, receiveExceptions)
             if (handler != null) {
-                throw ReceivePipelineExceptionWrapper(exception)
-            } else
+                throw ReceivePipelineExceptionWrapper(handler, exception)
+            } else {
                 throw exception
+            }
         }
     }
 
@@ -208,13 +210,14 @@ class ErrorResponses(config: Configuration) {
         } catch (exception: Throwable) {
             val handler = findHandlerByType(exception.javaClass, sendExceptions)
             if (handler != null) {
-                throw ReceivePipelineExceptionWrapper(exception)
-            } else
+                throw SendPipelineExceptionWrapper(handler, exception)
+            } else {
                 throw exception
+            }
         }
     }
 
-    private fun findHandlerByType(clazz: Class<*>, exceptions: HashMap<Class<*>, CallCallback>): (CallCallback)? {
+    private fun findHandlerByType(clazz: Class<*>, exceptions: HashMap<Class<*>, CallCallback>): CallCallback? {
         exceptions[clazz]?.let { return it }
         clazz.superclass?.let {
             findHandlerByType(it, exceptions)?.let { return it }
