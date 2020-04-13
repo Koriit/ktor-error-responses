@@ -18,6 +18,8 @@ comments:
 complexity:
   ComplexMethod:
     ignoreSimpleWhenEntries: true
+  LongParameterList:
+    constructorThreshold: 10
 
 formatting:
   active: false
