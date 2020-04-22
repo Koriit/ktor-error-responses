@@ -156,6 +156,6 @@ open class DefaultExceptionHandler(
         timestamp: OffsetDateTime = OffsetDateTime.now(),
         cause: Throwable? = null
     ): Any {
-        return ApiError(status, type, title, path, instance, detail)
+        return ApiError(status, type, title, detail, instance, path, timestamp)
     }
 }

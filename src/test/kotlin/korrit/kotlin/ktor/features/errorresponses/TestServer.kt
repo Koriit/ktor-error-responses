@@ -30,12 +30,7 @@ fun testServer(
     installCallId: Boolean = true
 ): TestApplicationEngine {
     return TestApplicationEngine(applicationEngineEnvironment {
-        val jackson = JsonMapper.builder()
-            .addModule(KotlinModule())
-            .addModule(JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .build()
+        val jackson = jackson()
 
         module {
             if (installCallId) {
@@ -82,3 +77,10 @@ fun testServer(
         }
     })
 }
+
+internal fun jackson() = JsonMapper.builder()
+    .addModule(KotlinModule())
+    .addModule(JavaTimeModule())
+    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build()
