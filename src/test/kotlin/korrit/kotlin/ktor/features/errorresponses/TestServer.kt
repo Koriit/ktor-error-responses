@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.korrit.kotlin.ktor.convertTime
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.CallId
@@ -24,62 +25,63 @@ import io.ktor.routing.routing
 import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.testing.TestApplicationEngine
 import java.util.UUID
-import korrit.kotlin.ktor.convertTime
 
 fun testServer(
     installCallId: Boolean = true
 ): TestApplicationEngine {
-    return TestApplicationEngine(applicationEngineEnvironment {
-        val jackson = jackson()
+    return TestApplicationEngine(
+        applicationEngineEnvironment {
+            val jackson = jackson()
 
-        module {
-            if (installCallId) {
-                install(CallId) {
-                    header(HttpHeaders.XRequestId)
-                    generate { UUID.randomUUID().toString() }
-                    verify { it.isNotBlank() }
+            module {
+                if (installCallId) {
+                    install(CallId) {
+                        header(HttpHeaders.XRequestId)
+                        generate { UUID.randomUUID().toString() }
+                        verify { it.isNotBlank() }
+                    }
                 }
-            }
-            install(DataConversion) {
-                convertTime(jackson)
-            }
-            install(ContentNegotiation) {
-                register(Application.Json, JacksonConverter(jackson))
-            }
+                install(DataConversion) {
+                    convertTime(jackson)
+                }
+                install(ContentNegotiation) {
+                    register(Application.Json, JacksonConverter(jackson))
+                }
 
-            install(ErrorResponses) {
-                handler<DefaultExceptionHandler> {
-                    // Domain
-                    register<SomeDomainException>(HttpStatusCode.UnprocessableEntity)
-                    // Jackson
-                    registerReceive<JsonProcessingException>(HttpStatusCode.BadRequest)
-                    registerSend<JsonProcessingException>(HttpStatusCode.Conflict)
+                install(ErrorResponses) {
+                    handler<DefaultExceptionHandler> {
+                        // Domain
+                        register<SomeDomainException>(HttpStatusCode.UnprocessableEntity)
+                        // Jackson
+                        registerReceive<JsonProcessingException>(HttpStatusCode.BadRequest)
+                        registerSend<JsonProcessingException>(HttpStatusCode.Conflict)
+                    }
                 }
-            }
 
-            routing {
-                get("/no-content") {
-                    call.respond(HttpStatusCode.NoContent, "")
-                }
-                get("/global-error") {
-                    throw SomeDomainException()
-                }
-                get("/unmapped-error") {
-                    jackson.readValue<Fixture>("")
-                }
-                get("/send-error") {
-                    call.respond(this)
-                }
-                post("/receive-error") {
-                    call.respond(call.receive<Fixture>())
+                routing {
+                    get("/no-content") {
+                        call.respond(HttpStatusCode.NoContent, "")
+                    }
+                    get("/global-error") {
+                        throw SomeDomainException()
+                    }
+                    get("/unmapped-error") {
+                        jackson.readValue<Fixture>("")
+                    }
+                    get("/send-error") {
+                        call.respond(this)
+                    }
+                    post("/receive-error") {
+                        call.respond(call.receive<Fixture>())
+                    }
                 }
             }
         }
-    })
+    )
 }
 
 internal fun jackson() = JsonMapper.builder()
-    .addModule(KotlinModule())
+    .addModule(KotlinModule.Builder().build())
     .addModule(JavaTimeModule())
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)

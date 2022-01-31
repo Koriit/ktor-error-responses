@@ -13,8 +13,8 @@ import io.ktor.request.ApplicationReceiveRequest
 import io.ktor.response.ApplicationSendPipeline
 import io.ktor.util.AttributeKey
 import io.ktor.util.pipeline.PipelineContext
-import kotlin.reflect.full.primaryConstructor
 import kotlinx.coroutines.coroutineScope
+import kotlin.reflect.full.primaryConstructor
 
 typealias CallCallback = suspend PipelineContext<Unit, ApplicationCall>.(Throwable) -> Unit
 typealias StatusCallback = suspend PipelineContext<Any, ApplicationCall>.(HttpStatusCode) -> Unit
@@ -78,7 +78,7 @@ class ErrorResponses(config: Configuration) {
             handler: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit
         ) {
             @Suppress("UNCHECKED_CAST")
-            callExceptions.put(klass, handler as CallCallback)
+            callExceptions[klass] = handler as CallCallback
         }
 
         /**
@@ -97,7 +97,7 @@ class ErrorResponses(config: Configuration) {
             handler: suspend PipelineContext<ApplicationReceiveRequest, ApplicationCall>.(T) -> Unit
         ) {
             @Suppress("UNCHECKED_CAST")
-            receiveExceptions.put(klass, handler as CallCallback)
+            receiveExceptions[klass] = handler as CallCallback
         }
 
         /**
@@ -116,7 +116,7 @@ class ErrorResponses(config: Configuration) {
             handler: suspend PipelineContext<Any, ApplicationCall>.(T) -> Unit
         ) {
             @Suppress("UNCHECKED_CAST")
-            sendExceptions.put(klass, handler as CallCallback)
+            sendExceptions[klass] = handler as CallCallback
         }
 
         /**
@@ -124,7 +124,7 @@ class ErrorResponses(config: Configuration) {
          */
         fun status(vararg status: HttpStatusCode, handler: StatusCallback) {
             status.forEach {
-                statuses.put(it, handler)
+                statuses[it] = handler
             }
         }
 

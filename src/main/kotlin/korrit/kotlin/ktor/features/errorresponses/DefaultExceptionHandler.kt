@@ -16,17 +16,15 @@ import io.ktor.http.HttpStatusCode.Companion.allStatusCodes
 import io.ktor.http.content.OutgoingContent.NoContent
 import io.ktor.request.path
 import io.ktor.response.respond
-import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.pipeline.PipelineContext
-import java.time.OffsetDateTime
-import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.TimeoutCancellationException
 import org.slf4j.LoggerFactory
+import java.time.OffsetDateTime
+import java.util.concurrent.TimeoutException
 
 /**
  * Base exception handler for HTTP API server.
  */
-@KtorExperimentalAPI
 open class DefaultExceptionHandler(
     @PublishedApi internal val config: ErrorResponses.Configuration
 ) {
