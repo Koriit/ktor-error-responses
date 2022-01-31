@@ -1,10 +1,10 @@
 = Ktor Error Responses
 
-image:https://www.travis-ci.org/Koriit/ktor-error-responses.svg?branch=master["Build Status", link="https://www.travis-ci.org/Koriit/ktor-error-responses"]
+image:https://github.com/Koriit/ktor-error-responses/actions/workflows/build.yaml/badge.svg[Build, link="https://github.com/Koriit/ktor-error-responses/actions/workflows/build.yaml"]
 image:https://www.codefactor.io/repository/github/koriit/ktor-error-responses/badge[CodeFactor,link=https://www.codefactor.io/repository/github/koriit/ktor-error-responses]
 image:https://img.shields.io/badge/code%20style-%E2%9D%A4-FF4081.svg[ktlint,link=https://ktlint.github.io/]
 
-image:https://api.bintray.com/packages/koriit/kotlin/ktor-error-responses/images/download.svg[Download, link=https://bintray.com/koriit/kotlin/ktor-error-responses/_latestVersion]
+image:https://img.shields.io/maven-central/v/com.koriit.kotlin/ktor-error-responses.svg?label=Maven%20Central[Maven Central, link="https://search.maven.org/search?q=g:%22com.koriit.kotlin%22%20AND%20a:%22ktor-error-responses%22"]
 image:https://img.shields.io/github/license/koriit/ktor-error-responses[GitHub]
 
 Ktor Error Responses feature for HTTP APIs
