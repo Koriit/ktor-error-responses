@@ -1,4 +1,4 @@
-package korrit.kotlin.ktor.features.errorresponses
+package com.korrit.kotlin.ktor.features.errorresponses
 
 import com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath
 import com.jayway.jsonpath.matchers.JsonPathMatchers.isJson

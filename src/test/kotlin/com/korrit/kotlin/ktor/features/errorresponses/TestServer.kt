@@ -1,4 +1,4 @@
-package korrit.kotlin.ktor.features.errorresponses
+package com.korrit.kotlin.ktor.features.errorresponses
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature

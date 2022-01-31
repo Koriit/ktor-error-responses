@@ -1,4 +1,4 @@
-package korrit.kotlin.ktor.features.errorresponses
+package com.korrit.kotlin.ktor.features.errorresponses
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.koriit.kotlin.slf4j.mdc.correlation.correlateThread

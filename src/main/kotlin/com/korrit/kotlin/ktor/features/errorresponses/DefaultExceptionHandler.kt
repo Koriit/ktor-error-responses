@@ -1,4 +1,4 @@
-package korrit.kotlin.ktor.features.errorresponses
+package com.korrit.kotlin.ktor.features.errorresponses
 
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
